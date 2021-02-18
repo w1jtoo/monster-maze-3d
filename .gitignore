@@ -1,0 +1,7 @@
+# DOS specific files
+*.com
+*.COM
+
+*.exe
+*.EXE
+
