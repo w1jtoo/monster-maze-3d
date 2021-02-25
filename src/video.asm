@@ -34,9 +34,9 @@ restore_video:
     ret
 
 update_screen:
-    ;; in this game we have field 25 x 40 blocks
+    ;; in this game we have field 80 x 50 blocks
     ;;          each block
-    ;;              1) 8 x 8 pixels
+    ;;              1) 4 x 4 pixels
     ;;              2) has texture from table
     ;; this function should redraw blocks from the list
 
@@ -67,14 +67,14 @@ update_screen:
     push    cx
 
     ;; find pixel number by x
-    ;; x_offset = 8 * x
-    shl     ax, 3       ;; ax *= 8
+    ;; x_offset = 4 * x
+    shl     ax, 2       ;; ax *= 4
 
     ;; find pixel number by y
-    ;; y_offset = 8 * 4 * 320 * y
+    ;; y_offset = 4 * 320 * y
     mov     dx, bx      ;; 
-    shl     bx, 11
-    shl     dx, 9
+    shl     bx, 10
+    shl     dx, 8
 
     ;; pos = x_offset + y_offset
     add     ax, bx
@@ -99,23 +99,23 @@ update_screen:
 
 .draw_black:
 
-%rep 8
+%rep 4
     mov     ax, 0x0000
-    mov     cx, 0x4
+    mov     cx, 0x2
     rep     stosw
 
-    add     di, (0x140 - 8)
+    add     di, (0x140 - 4)
 %endrep
 
     jmp     .ret
 
 .draw_white:
-%rep 8
+%rep 4
     mov     ax, 0x0f0f
-    mov     cx, 0x4
+    mov     cx, 0x2
     rep     stosw
 
-    add     di, (0x140 - 8)
+    add     di, (0x140 - 4)
 %endrep
 
     jmp     .ret
