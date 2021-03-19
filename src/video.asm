@@ -33,47 +33,20 @@ restore_video:
     int     0x10
     ret
 
-;; update_screen:
-    ;; in this game we have field 80 x 50 blocks
-    ;;          each block
-    ;;              1) 4 x 4 pixels
-    ;;              2) has texture from table
-    ;; this function should redraw blocks from the list
-
-    ;; test draw of 3 white block
-   ;; mov     ax, 0x1
-   ;; mov     bx, 0x0
-   ;; mov     cx, 0x1
-   ;; call    .draw_block
-
-   ;; mov     ax, 0x2
-   ;; mov     bx, 0x1
-   ;; mov     cx, 0x1
-   ;; call    .draw_block
-
-   ;; mov     ax, 0x1
-   ;; mov     bx, 0x3
-   ;; mov     cx, 0x1
-   ;; call    .draw_block
-
-    ;; DRAW_FIRST_LEFT_WHITE_BLOCK
-
-    ;; ret
-
 
 ;; =============================================================================
 ;; =============================================================================
 ;;
 ;;  in the monster maze 3d we could decribe our game's visual part
-;;      as three raws: left, middle and right
-;;  for each raw is array of 0 or 1 where:
+;;      as three raws/parts of screen: left, middle and right
+;;  each raw is an array of 0 or 1 where:
 ;;          0 is for empty part or passage
 ;;          1 for filled part   or wall
 ;;      for left and right raw:
 ;;          passage means the far wall
-;;              its visual part is black rectagle on white square
+;;              its visual is black rectagle on white square
 ;;          wall means the near wall
-;;              its visual part is black triangle or isoscales trapezoid
+;;              its visual is black triangle or isoscales trapezoid
 ;;              on white square
 ;;      for the middle raw:
 ;;          passage means nothing
@@ -109,11 +82,28 @@ restore_video:
 
 %endmacro
 
+%macro DRAW_FIRST_RIGHT_WHITE_BLOCK 0
+    DRAW_BLACK_BLOCK        49, 49
+    DRAW_BLACK_BLOCK_OPT    49, 0   ;; ax keep @BLACK
+    sub     di, 0x4                 ;; make pointer to draw start position right
+
+%%first_column_loop:
+    ;; draw lines of 8 black pixels
+    mov     cx, 0x4
+    rep     stosw
+    add     di, (SCREEN_WIDTH - 4 * 2)
+
+    cmp     di, OFFSET(48, 49)
+    jne     %%first_column_loop
+
+%endmacro
+
 %macro DRAW_FIRST_LEFT_WHITE_BLOCK 0
     DRAW_BLACK_BLOCK        0, 49
     DRAW_BLACK_BLOCK_OPT    0, 0        ;; di in good position
-                                        ;; ax keep @WHITE
+                                        ;; ax keep @BLACK
 %%first_column_loop:
+    ;; draw lines of 8 black pixels
     mov     cx, 0x4
     rep     stosw
     add     di, (SCREEN_WIDTH - 4 * 2)
@@ -147,7 +137,7 @@ restore_video:
     %undef  _FIRST
 %endmacro
 
-%macro _DRAW_BLACK_BLOCK 2
+%macro _DRAW_BLACK_BLOCK 2-3 (SCREEN_WIDTH - 4)
     mov     di, OFFSET(%1, %2)
 
 %rep 4
@@ -157,35 +147,46 @@ restore_video:
     mov     cx, 0x2
     rep     stosw
 
-    add     di,  (SCREEN_WIDTH - 4)
+    add     di, %3
 %endrep
 %endmacro
 
-%macro DRAW_BLACK_BLOCK_OPT 2
-    _DRAW_BLACK_BLOCK %1, %2
+%macro DRAW_BLACK_BLOCK_OPT 2-3 (SCREEN_WIDTH - 4)
+    _DRAW_BLACK_BLOCK %1, %2, %3
 %endmacro
 
-%macro DRAW_BLACK_BLOCK 2
+%macro DRAW_BLACK_BLOCK 2-3 (SCREEN_WIDTH - 4)
     %define _FIRST
-    _DRAW_BLACK_BLOCK %1, %2
+    _DRAW_BLACK_BLOCK %1, %2, %3
     %undef  _FIRST
 %endmacro
 
 
-update_screen:
-;;    mov     ax, 0x0
-;;    mov     bx, 0x0
-;;    mov     cx, 0x1
+;; in this game we have field 80 x 50 blocks
+;;          each block
+;;              1) 4 x 4 pixels
+;;              2) has texture from table
+;; this function should redraw blocks from the list
 ;;
-;;    call .draw_block
+update_screen:
     FILL_SCREEN_WITH_WHITE
     DRAW_FIRST_LEFT_WHITE_BLOCK
+    DRAW_FIRST_RIGHT_WHITE_BLOCK
     ret
 
 
+;; =============================================================================
+;;  expample of .draw_block function use
+;;    mov     ax, 0x0   ;; drawing block with x = 0
+;;    mov     bx, 0x1   ;; drawing block with y = 1
+;;    mov     cx, 0x1   ;; block_id = 1, so this block is white
+;;
+;;    call .draw_block
+;; =============================================================================
 ;; ax - x
 ;; bx - y
 ;; cx - id
+;; =============================================================================
 .draw_block:
     push    ax
     push    bx
