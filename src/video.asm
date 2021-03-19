@@ -33,7 +33,7 @@ restore_video:
     int     0x10
     ret
 
-update_screen:
+;; update_screen:
     ;; in this game we have field 80 x 50 blocks
     ;;          each block
     ;;              1) 4 x 4 pixels
@@ -41,22 +41,24 @@ update_screen:
     ;; this function should redraw blocks from the list
 
     ;; test draw of 3 white block
-    mov     ax, 0x1
-    mov     bx, 0x0
-    mov     cx, 0x1
-    call    .draw_block
+   ;; mov     ax, 0x1
+   ;; mov     bx, 0x0
+   ;; mov     cx, 0x1
+   ;; call    .draw_block
 
-    mov     ax, 0x2
-    mov     bx, 0x1
-    mov     cx, 0x1
-    call    .draw_block
+   ;; mov     ax, 0x2
+   ;; mov     bx, 0x1
+   ;; mov     cx, 0x1
+   ;; call    .draw_block
 
-    mov     ax, 0x1
-    mov     bx, 0x3
-    mov     cx, 0x1
-    call    .draw_block
+   ;; mov     ax, 0x1
+   ;; mov     bx, 0x3
+   ;; mov     cx, 0x1
+   ;; call    .draw_block
 
-    ret
+    ;; DRAW_FIRST_LEFT_WHITE_BLOCK
+
+    ;; ret
 
 
 ;; =============================================================================
@@ -82,17 +84,104 @@ update_screen:
 ;;          next macros draws raw parts accounting the dinstance
 ;;
 
-%define SCREEN_WIDTH 320
+%define SCREEN_WIDTH    320
+%define SCREEN_SIZE     320 * 200
+%define SCREEN_HIGHT    200
+
+%define BLACK           0x00
+%define DOUBLE_BLACK    0x0000
+
+%define WHITE           0x0f
+%define DOUBLE_WHITE    0x0f0f
+
 %define OFFSET(x, y) (4 * x + 4 * SCREEN_WIDTH * y)
 
+%macro FILL_SCREEN_WITH_WHITE 0
+    mov     di, 0x0
+    mov     ax, DOUBLE_WHITE
+
+%%loop:
+    mov     cx, SCREEN_HIGHT / 2
+    rep     stosw
+
+    cmp     di, SCREEN_SIZE
+    jne     %%loop
+
+%endmacro
+
 %macro DRAW_FIRST_LEFT_WHITE_BLOCK 0
-    mov di, OFFSET(0, 0)
+    DRAW_BLACK_BLOCK        0, 49
+    DRAW_BLACK_BLOCK_OPT    0, 0        ;; di in good position
+                                        ;; ax keep @WHITE
+%%first_column_loop:
+    mov     cx, 0x4
+    rep     stosw
+    add     di, (SCREEN_WIDTH - 4 * 2)
+
+    cmp     di, OFFSET(0, 49)
+    jne     %%first_column_loop
 
 %endmacro
 
-%macro DRAW_WHITE_BLOCK 0
+%macro _DRAW_WHITE_BLOCK 2
+    mov     di, OFFSET(%1, %2)
 
+%rep 4
+    %ifdef _FIRST
+        mov     ax, DOUBLE_WHITE
+    %endif
+    mov     cx, 0x2
+    rep     stosw
+
+    add     di,  (SCREEN_WIDTH - 4)
+%endrep
 %endmacro
+
+%macro DRAW_WHITE_BLOCK_OPT 2
+    _DRAW_WHITE_BLOCK %1, %2
+%endmacro
+
+%macro DRAW_WHITE_BLOCK 2
+    %define _FIRST
+    _DRAW_WHITE_BLOCK %1, %2
+    %undef  _FIRST
+%endmacro
+
+%macro _DRAW_BLACK_BLOCK 2
+    mov     di, OFFSET(%1, %2)
+
+%rep 4
+    %ifdef _FIRST
+        mov     ax, DOUBLE_BLACK
+    %endif
+    mov     cx, 0x2
+    rep     stosw
+
+    add     di,  (SCREEN_WIDTH - 4)
+%endrep
+%endmacro
+
+%macro DRAW_BLACK_BLOCK_OPT 2
+    _DRAW_BLACK_BLOCK %1, %2
+%endmacro
+
+%macro DRAW_BLACK_BLOCK 2
+    %define _FIRST
+    _DRAW_BLACK_BLOCK %1, %2
+    %undef  _FIRST
+%endmacro
+
+
+update_screen:
+;;    mov     ax, 0x0
+;;    mov     bx, 0x0
+;;    mov     cx, 0x1
+;;
+;;    call .draw_block
+    FILL_SCREEN_WITH_WHITE
+    DRAW_FIRST_LEFT_WHITE_BLOCK
+    ret
+
 
 ;; ax - x
 ;; bx - y
