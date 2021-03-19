@@ -58,9 +58,45 @@ update_screen:
 
     ret
 
-    ;; ax - x
-    ;; bx - y
-    ;; cx - id
+
+;; =============================================================================
+;; =============================================================================
+;;
+;;  in the monster maze 3d we could decribe our game's visual part
+;;      as three raws: left, middle and right
+;;  for each raw is array of 0 or 1 where:
+;;          0 is for empty part or passage
+;;          1 for filled part   or wall
+;;      for left and right raw:
+;;          passage means the far wall
+;;              its visual part is black rectagle on white square
+;;          wall means the near wall
+;;              its visual part is black triangle or isoscales trapezoid
+;;              on white square
+;;      for the middle raw:
+;;          passage means nothing
+;;              its visual part is pair of symetric white isoscale trapezoid
+;;          wall means black rectagle
+;;
+;;==============================================================================
+;;          next macros draws raw parts accounting the dinstance
+;;
+
+%define SCREEN_WIDTH 320
+%define OFFSET(x, y) (4 * x + 4 * SCREEN_WIDTH * y)
+
+%macro DRAW_FIRST_LEFT_WHITE_BLOCK 0
+    mov di, OFFSET(0, 0)
+
+%endmacro
+
+%macro DRAW_WHITE_BLOCK 0
+
+%endmacro
+
+;; ax - x
+;; bx - y
+;; cx - id
 .draw_block:
     push    ax
     push    bx
